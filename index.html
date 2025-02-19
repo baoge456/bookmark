@@ -299,21 +299,40 @@
 
         // 导入书签
         function importBookmarks() {
-            const jsonString = prompt('请输入JSON格式的书签列表:');
-            if (jsonString) {
-                try {
-                    const importedBookmarks = JSON.parse(jsonString);
-                    if (Array.isArray(importedBookmarks)) {
-                        localStorage.setItem('bookmarks', JSON.stringify(importedBookmarks));
-                        loadBookmarks(); // 重新加载书签
-                    } else {
-                        alert('输入的不是有效的书签列表');
-                    }
-                } catch (e) {
-                    alert('JSON格式不正确');
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';  // Only allow JSON files
+
+            input.onchange = event => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+
+                    reader.onload = readerEvent => {
+                        try {
+                            const jsonString = readerEvent.target.result;
+                            const importedBookmarks = JSON.parse(jsonString);
+                            if (Array.isArray(importedBookmarks)) {
+                                localStorage.setItem('bookmarks', JSON.stringify(importedBookmarks));
+                                loadBookmarks(); // 重新加载书签
+                            } else {
+                                alert('文件内容不是有效的书签列表');
+                            }
+                        } catch (e) {
+                            alert('JSON格式不正确');
+                        }
+                    };
+
+                    reader.onerror = () => {
+                        alert('读取文件时发生错误');
+                    };
+
+                    reader.readAsText(file);
                 }
-            }
-            hideAllButtons();
+                hideAllButtons();
+            };
+
+            input.click(); // Programmatically trigger the file selection dialog
         }
 
         // 导出书签
