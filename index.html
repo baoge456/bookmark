@@ -9,7 +9,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh; /* Ensure at least full screen height */
             margin: 0;
             background-color: green;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -24,6 +24,12 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             padding: 20px;
             position: relative;
+            margin-bottom: 20px; /* Add margin at the bottom */
+        }
+
+        #bookmark-list {
+            overflow-y: auto; /* Enable vertical scrolling */
+            max-height: 80vh; /* Limit the height to 80% of the viewport height */
         }
 
         .bookmark {
@@ -34,7 +40,7 @@
             border-radius: 5px;
             position: relative;
             cursor: pointer;
-            text-align: center; /* 书签名称居中展示 */
+            text-align: center;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
@@ -42,7 +48,7 @@
             margin: 0;
             font-size: 1.2em;
             color: #5CAF50;
-            word-wrap: break-word; /* 书签名称长度自动调整 */
+            word-wrap: break-word;
         }
 
         .bookmark h2 a {
@@ -56,7 +62,7 @@
 
         .bookmark:hover,
         .bookmark.selected {
-            background-color: purple; /* 鼠标悬浮或选定时显示紫色 */
+            background-color: purple;
             color: white;
         }
 
@@ -105,7 +111,7 @@
         </div>
 
         <footer>
-            
+
         </footer>
     </div>
 
