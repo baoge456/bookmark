@@ -93,6 +93,29 @@
             background-color: #388E3C;
         }
 
+        /* Style for the header buttons */
+        .header-buttons {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            display: none; /* Hidden by default */
+            gap: 5px;
+        }
+
+        .header-buttons button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .header-buttons button:hover {
+            background-color: #388E3C;
+        }
+
         footer {
             text-align: center;
             padding: 10px;
@@ -104,7 +127,13 @@
 <body>
 
     <div class="container">
-        <h1 style="text-align:center; margin-bottom:20px;">书签导航</h1>
+        <h1 id = "header" style="text-align:center; margin-bottom:20px; position: relative;">
+            书签导航
+            <div class="header-buttons">
+                <button onclick="importBookmarks()">导入列表</button>
+                <button onclick="exportBookmarks()">导出列表</button>
+            </div>
+        </h1>
 
         <div id="bookmark-list">
             <!-- Existing bookmarks will be loaded from localStorage -->
@@ -158,37 +187,41 @@
             document.querySelectorAll('.buttons').forEach(buttons => {
                 buttons.style.display = 'none';
             });
+            // Also hide header buttons
+            const headerButtons = document.querySelector('.header-buttons');
+            if (headerButtons) {
+                headerButtons.style.display = 'none';
+            }
         }
 
         // 长按事件（支持左键长按和右键点击）
         let longPressTimer;
-        document.addEventListener('mousedown', function (event) {
-            const bookmark = event.target.closest('.bookmark');
-            if (bookmark) {
-                longPressTimer = setTimeout(() => {
-                    showButtons(bookmark);
-                    bookmark.classList.add('selected');
-                }, 500); // 500ms后触发长按
-            }
+        const header = document.getElementById('header');
+
+        header.addEventListener('mousedown', function (event) {
+            longPressTimer = setTimeout(() => {
+                showHeaderButtons();
+            }, 500); // 500ms后触发长按
         });
 
-        document.addEventListener('mouseup', function (event) {
+        header.addEventListener('mouseup', function (event) {
             clearTimeout(longPressTimer); // 清除长按计时器
-            if (!event.target.closest('.bookmark')) {
-                hideAllButtons();
-                document.querySelectorAll('.bookmark').forEach(bm => bm.classList.remove('selected'));
-            }
+        });
+
+        header.addEventListener('mouseleave', function (event) {
+            clearTimeout(longPressTimer); // Clear timer if mouse leaves the header
         });
 
         // 右键点击事件
-        document.addEventListener('contextmenu', function (event) {
+        header.addEventListener('contextmenu', function (event) {
             event.preventDefault(); // 阻止默认右键菜单
-            const bookmark = event.target.closest('.bookmark');
-            if (bookmark) {
-                showButtons(bookmark);
-                bookmark.classList.add('selected');
-            }
+            showHeaderButtons();
         });
+
+        function showHeaderButtons() {
+            const headerButtons = document.querySelector('.header-buttons');
+            headerButtons.style.display = 'flex';
+        }
 
         // 在当前书签下方添加书签
         function addBookmarkBelow(button) {
@@ -264,8 +297,45 @@
             localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
         }
 
+        // 导入书签
+        function importBookmarks() {
+            const jsonString = prompt('请输入JSON格式的书签列表:');
+            if (jsonString) {
+                try {
+                    const importedBookmarks = JSON.parse(jsonString);
+                    if (Array.isArray(importedBookmarks)) {
+                        localStorage.setItem('bookmarks', JSON.stringify(importedBookmarks));
+                        loadBookmarks(); // 重新加载书签
+                    } else {
+                        alert('输入的不是有效的书签列表');
+                    }
+                } catch (e) {
+                    alert('JSON格式不正确');
+                }
+            }
+            hideAllButtons();
+        }
+
+        // 导出书签
+        function exportBookmarks() {
+            const bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+            const jsonString = JSON.stringify(bookmarks);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bookmarks.json'; // 文件名
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            hideAllButtons();
+        }
+
         // 页面加载时调用 loadBookmarks
-        window.onload = loadBookmarks;
+        window.onload = () => {
+            loadBookmarks();
+        };
     </script>
 </body>
 </html>
