@@ -6,177 +6,260 @@
     <title>书签导航</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: green;
-            color: #333;
-        }
-        header {
-            background-color: #FFFFBB;
-            color: green;
-            text-align: center;
-            padding: 1em 0;
-            box-shadow: 0 3px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2px;
-        }
-        header h1 {
-            margin: 0;
-            width: 100%;
-            font-size: 3em;
-            text-align: center;
-            letter-spacing: 10px;
-        }
-        main {
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            margin: 30px auto;
-            max-width: 800px;
-            padding:20 20px;
+            height: 100vh;
+            margin: 0;
+            background-color: green;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .news-card {
+
+        .container {
+            width: 90%;
+            max-width: 600px;
             background-color: #FFFFBB;
             border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin: 5px 0;
-            padding: 5px;
-            width: 100%;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            position: relative;
         }
-        .news-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 4px rgba(0, 0, 0, 0.15);
+
+        .bookmark {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #FFFFDD;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            position: relative;
+            cursor: pointer;
+            text-align: center; /* 书签名称居中展示 */
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
-        .news-card h2 {
-            margin: 10;
-            font-size: 1.5em;
-            text-align: center;
+
+        .bookmark h2 {
+            margin: 0;
+            font-size: 1.2em;
             color: #5CAF50;
-            text-decoration: center;
-            letter-spacing: 20px;
-            transition: color 0.3s ease;
+            word-wrap: break-word; /* 书签名称长度自动调整 */
         }
-        .news-card h2 a {
+
+        .bookmark h2 a {
             text-decoration: none;
-            
-            color: grape;
+            color: #5CAF50;
         }
-        .news-card h2 a:hover {
+
+        .bookmark h2 a:hover {
             color: #388E3C;
         }
-        .news-card p {
-            font-size: 1000em;
-            line-height: 1.6;
-            color: #555;
-            margin: 10px 0 0 0;
+
+        .bookmark:hover,
+        .bookmark.selected {
+            background-color: purple; /* 鼠标悬浮或选定时显示紫色 */
+            color: white;
         }
+
+        .bookmark:hover h2 a,
+        .bookmark.selected h2 a {
+            color: white;
+        }
+
+        .buttons {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: none;
+            gap: 5px;
+        }
+
+        .buttons button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .buttons button:hover {
+            background-color: #388E3C;
+        }
+
         footer {
-            background-color: #FFFFBB;
-            color: green;
             text-align: center;
-            padding: 1.5em 0;
-            margin-top: 20px;
-            width: 100%;
-            font-size:0.2em;
+            padding: 10px;
+            font-size: 0.8em;
+            color: #555;
         }
     </style>
-    </script>
-    <script defer src="https://fx.baoge666.us.kg/tracker.min.js" data-website-id="新闻资讯"></script>
 </head>
 <body>
 
-    <header>
-        <h1>✯✯✯书签导航✯✯✯</h1>
-    </header>
+    <div class="container">
+        <h1 style="text-align:center; margin-bottom:20px;">✯✯✯✯✯✯书签导航✯✯✯✯✯✯</h1>
 
-    <main>
- <div class="news-card">
-            <h2><a href="https://hot.ailake.cn/hot/1" target="_blank">❆全网热点❆</a></h2>
-            
-        </div>
-        
-<div class="news-card">
-            <h2><a href="https://tophub.today/">❆今日热榜❆</a></h2>
-            
-        </div>
-    
-    
-        
-
-        <div class="news-card">
-            <h2><a href="https://www.hsmy.fun/news/toutiao" target="_blank">❆头条热榜❆</a></h2>
-            
+        <div id="bookmark-list">
+            <!-- Existing bookmarks will be loaded from localStorage -->
         </div>
 
-        <div class="news-card">
-            <h2><a href="https://www.36jxs.com/hot.html" target="_blank">❆实时热点❆</a></h2>
-            
-        </div>
+        <footer>
+            <p>【 ✯✯✯✯✯✯✯✯✯✯✯✯✯✯✯宝哥自建书签导航-20250220✯✯✯✯✯✯✯✯✯✯✯✯✯✯✯ 】</p>
+        </footer>
+    </div>
 
-        <div class="news-card">
-            <h2><a href="https://www.huashuimoyu.com/" target="_blank">❆划水摸鱼❆</a></h2>
-            
-        </div>
+    <script>
+        // 默认书签，确保至少有一个书签
+        const defaultBookmark = { title: "默认书签", url: "https://example.com" };
 
-        <div class="news-card">
-            <h2><a href="http://guozhivip.com/rank/" target="_blank">❆果汁排行❆</a></h2>
-       </div>
+        // 从 localStorage 中加载书签
+        function loadBookmarks() {
+            const bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [defaultBookmark];
+            const bookmarkList = document.getElementById('bookmark-list');
+            bookmarkList.innerHTML = ''; // 清空现有书签
+            bookmarks.forEach(bookmark => {
+                createBookmark(bookmark.title, bookmark.url);
+            });
+        }
 
-        <div class="news-card">
-            <h2><a href="https://www.myzaker.com/">❆扎客新闻❆</a></h2>
-       </div>
+        // 创建书签
+        function createBookmark(title, url) {
+            const bookmarkList = document.getElementById('bookmark-list');
+            const bookmark = document.createElement('div');
+            bookmark.className = 'bookmark';
+            bookmark.setAttribute('data-title', title);
+            bookmark.setAttribute('data-url', url);
+            bookmark.innerHTML = `
+                <h2><a href="${url}" target="_blank">${title}</a></h2>
+                <div class="buttons">
+                    <button onclick="addBookmarkBelow(this)">添加</button>
+                    <button onclick="editBookmark(this)">编辑</button>
+                    <button onclick="deleteBookmark(this)">删除</button>
+                </div>
+            `;
+            bookmarkList.appendChild(bookmark);
+        }
 
-        <div class="news-card">
-            <h2><a href="https://news.jxcn.cn/?from=jx33" target="_blank">❆大江头条❆</a></h2>
-            
-        </div>
+        // 显示操作按钮
+        function showButtons(bookmark) {
+            const buttons = bookmark.querySelector('.buttons');
+            buttons.style.display = 'flex';
+        }
 
-        <div class="news-card">
-            <h2><a href="https://www.cio360.net/" target="_blank">❆信息主管❆</a></h2>
-       </div>
-            
-        
+        // 隐藏所有操作按钮
+        function hideAllButtons() {
+            document.querySelectorAll('.buttons').forEach(buttons => {
+                buttons.style.display = 'none';
+            });
+        }
 
-<div class="news-card">
-            <h2><a href="https://www.xuexi.cn/3271716c843e44c7e00e66e38ad6fcd5/e2c3733327a5a413f63fc980e92f4552.html" target="_blank">❆学习强国❆</a></h2>
-            
-        </div>
+        // 长按事件（支持左键长按和右键点击）
+        let longPressTimer;
+        document.addEventListener('mousedown', function (event) {
+            const bookmark = event.target.closest('.bookmark');
+            if (bookmark) {
+                longPressTimer = setTimeout(() => {
+                    showButtons(bookmark);
+                    bookmark.classList.add('selected');
+                }, 500); // 500ms后触发长按
+            }
+        });
 
-<div class="news-card">
-            <h2><a href="https://www.qklw.com/" target="_blank">❆区块链网❆</a></h2>
-            
-        </div>
-<div class="news-card">
-            <h2><a href="https://cryptosavingexpert.com/news" target="_blank">❆加密储蓄❆</a></h2>
-            
-        </div>
+        document.addEventListener('mouseup', function (event) {
+            clearTimeout(longPressTimer); // 清除长按计时器
+            if (!event.target.closest('.bookmark')) {
+                hideAllButtons();
+                document.querySelectorAll('.bookmark').forEach(bm => bm.classList.remove('selected'));
+            }
+        });
 
-<div class="news-card">
-            <h2><a href="https://blog.baoge.us.kg/" target="_blank">❆宝哥博客❆</a></h2>
-            
-        </div>
+        // 右键点击事件
+        document.addEventListener('contextmenu', function (event) {
+            event.preventDefault(); // 阻止默认右键菜单
+            const bookmark = event.target.closest('.bookmark');
+            if (bookmark) {
+                showButtons(bookmark);
+                bookmark.classList.add('selected');
+            }
+        });
 
-        
+        // 在当前书签下方添加书签
+        function addBookmarkBelow(button) {
+            const bookmark = button.closest('.bookmark');
+            const title = prompt('输入书签名称');
+            const url = prompt('输入书签链接');
+            if (title && url) {
+                createBookmarkAtPosition(title, url, bookmark);
+                saveBookmarks();
+            }
+        }
 
+        // 在指定位置创建书签
+        function createBookmarkAtPosition(title, url, targetBookmark) {
+            const newBookmark = document.createElement('div');
+            newBookmark.className = 'bookmark';
+            newBookmark.setAttribute('data-title', title);
+            newBookmark.setAttribute('data-url', url);
+            newBookmark.innerHTML = `
+                <h2><a href="${url}" target="_blank">${title}</a></h2>
+                <div class="buttons">
+                    <button onclick="addBookmarkBelow(this)">添加</button>
+                    <button onclick="editBookmark(this)">编辑</button>
+                    <button onclick="deleteBookmark(this)">删除</button>
+                </div>
+            `;
+            // 插入到当前书签的下方
+            targetBookmark.insertAdjacentElement('afterend', newBookmark);
+        }
 
+        // 编辑书签
+        function editBookmark(button) {
+            const bookmark = button.closest('.bookmark');
+            const title = bookmark.getAttribute('data-title');
+            const url = bookmark.getAttribute('data-url');
+            const newTitle = prompt('修改书签名称', title);
+            const newUrl = prompt('修改书签链接', url);
+            if (newTitle && newUrl) {
+                bookmark.setAttribute('data-title', newTitle);
+                bookmark.setAttribute('data-url', newUrl);
+                bookmark.querySelector('h2 a').textContent = newTitle;
+                bookmark.querySelector('h2 a').href = newUrl;
+                saveBookmarks();
+            }
+        }
 
-<div class="news-card">
-            <h2><a href="https://shorten.us.kg/" target="_blank">❆链接缩短❆</a></h2>
-            
-        </div>
+        // 删除书签
+        function deleteBookmark(button) {
+            const bookmark = button.closest('.bookmark');
+            // 确保至少保留一个书签
+            if (document.querySelectorAll('.bookmark').length > 1) {
+                bookmark.remove();
+                saveBookmarks();
+            } else {
+                // 如果删除最后一个书签，恢复默认书签
+                const bookmarkList = document.getElementById('bookmark-list');
+                bookmarkList.innerHTML = ''; // 清空现有书签
+                createBookmark(defaultBookmark.title, defaultBookmark.url);
+                saveBookmarks();
+                alert('最后一条书签已恢复为默认书签！');
+            }
+        }
 
-            
-        
+        // 保存书签到 localStorage
+        function saveBookmarks() {
+            const bookmarks = [];
+            document.querySelectorAll('.bookmark').forEach(bookmark => {
+                bookmarks.push({
+                    title: bookmark.getAttribute('data-title'),
+                    url: bookmark.getAttribute('data-url')
+                });
+            });
+            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        }
 
-
-        <!-- You can add more news cards in the same format -->
-    </main>
-
-    <footer>
-        <p>【 ✯✯✯✯✯✯✯✯✯✯✯✯✯✯✯宝哥书签导航-20250220✯✯✯✯✯✯✯✯✯✯✯✯✯✯✯ 】</p>
-    </footer>
-
+        // 页面加载时调用 loadBookmarks
+        window.onload = loadBookmarks;
+    </script>
 </body>
 </html>
