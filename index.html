@@ -30,7 +30,7 @@
 
         #bookmark-title {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         #import-export-buttons {
@@ -171,13 +171,38 @@
         }
 
         /* Removed scroll button styles */
+        /* Style for the settings button */
+        #settings-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #5CAF50;
+            transition: color 0.3s ease;
+        }
+
+        #settings-button:hover {
+            color: #388E3C;
+        }
+
+        /* Style for the current user display */
+        #current-user {
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+            color: #333;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h1 id="bookmark-title" style="text-align:center; margin-bottom:20px;">书签导航</h1>
-
+        <!-- Settings Button -->
+        <button id="settings-button" onclick="toggleSettings()">⚙</button>
         <!-- Import/Export Buttons -->
         <div id="import-export-buttons">
             <button onclick="triggerFileInput()">导入</button>
@@ -190,7 +215,8 @@
         <div id="bookmark-list">
             <!-- Existing bookmarks will be loaded from localStorage -->
         </div>
-
+        <!-- Current User Display -->
+        <div id="current-user"></div>
         <!-- Removed scroll buttons container -->
 
         <footer>
@@ -205,9 +231,26 @@
             url: "https://bookmark.baoge.rr.nu/"
         };
 
+        // 用户名和密码（存储在代码中 - 实际应用中应避免！）
+        const users = {
+            "baoge": "wsb123456",
+            "admin": "wsb123456",
+            "gui": "gui"
+        };
+
+        // 用于存储上次退出登录时书签的键
+        const lastBookmarksKey = 'lastBookmarks';
+
         // 从 localStorage 中加载书签
         function loadBookmarks() {
-            const bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [defaultBookmark];
+            const user = getCurrentUser();
+            let bookmarks;
+            if (user) {
+                bookmarks = JSON.parse(localStorage.getItem(`bookmarks_${user}`)) || JSON.parse(localStorage.getItem(lastBookmarksKey)) || [defaultBookmark];
+            } else {
+                bookmarks = [defaultBookmark];
+            }
+
             const bookmarkList = document.getElementById('bookmark-list');
             bookmarkList.innerHTML = ''; // 清空现有书签
             bookmarks.forEach(bookmark => {
@@ -263,60 +306,147 @@
             document.getElementById('file-input').click();
         }
 
+        // 检查用户是否已登录
+        function isLoggedIn() {
+            return localStorage.getItem('loggedInUser') !== null;
+        }
+
+        // 获取当前登录用户
+        function getCurrentUser() {
+            return localStorage.getItem('loggedInUser');
+        }
+
+        // 显示当前用户
+        function displayCurrentUser() {
+            const currentUserDiv = document.getElementById('current-user');
+            const user = getCurrentUser();
+            if (user) {
+                currentUserDiv.textContent = `当前用户：${user}`;
+            } else {
+                currentUserDiv.textContent = '';
+            }
+        }
+
+        // 切换设置按钮
+        function toggleSettings() {
+            if (isLoggedIn()) {
+                // 如果已登录，显示退出按钮
+                if (confirm("确定要退出登录吗？")) {
+                    const user = getCurrentUser();
+
+                    // 保存当前用户的书签到 lastBookmarksKey
+                    const bookmarks = [];
+                    document.querySelectorAll('.bookmark').forEach(bookmark => {
+                        bookmarks.push({
+                            name: bookmark.getAttribute('data-title'),
+                            url: bookmark.getAttribute('data-url')
+                        });
+                    });
+                    localStorage.setItem(lastBookmarksKey, JSON.stringify(bookmarks));
+
+                    localStorage.removeItem('loggedInUser');
+                    localStorage.removeItem(`bookmarks_${user}`);
+
+                    displayCurrentUser();
+                    loadBookmarks(); // 加载默认书签或 lastBookmarks
+                    location.reload(); // 刷新页面以复位
+                }
+            } else {
+                // 如果未登录，弹出用户名和密码提示框
+                const username = prompt("请输入用户名");
+                if (username !== null) {
+                    const password = prompt("请输入密码");
+                    if (password !== null) {
+                        if (users[username] === password) {
+                            localStorage.setItem('loggedInUser', username);
+                            displayCurrentUser();
+                            loadBookmarks(); // 加载用户的书签
+                            alert("登录成功！");
+                        } else {
+                            alert("用户名或密码错误！");
+                        }
+                    }
+                }
+            }
+        }
+
         // 长按事件和右键事件处理 (针对标题)
-        let longPressTimer;
+        let longPressTimerTitle;
+        let titleButtonsVisible = false;
+
         const bookmarkTitle = document.getElementById('bookmark-title'); // Select the H1 title
 
         bookmarkTitle.addEventListener('mousedown', function(event) {
-            longPressTimer = setTimeout(() => {
-                showImportExportButtons();
+            longPressTimerTitle = setTimeout(() => {
+                titleButtonsVisible = !titleButtonsVisible;
+                if (titleButtonsVisible) {
+                    showImportExportButtons();
+                } else {
+                    hideImportExportButtons();
+                }
             }, 500); // 500ms后触发长按
         });
 
         bookmarkTitle.addEventListener('mouseup', function(event) {
-            clearTimeout(longPressTimer); // 清除长按计时器
+            clearTimeout(longPressTimerTitle); // 清除长按计时器
         });
 
         bookmarkTitle.addEventListener('mouseleave', function(event) {
-            clearTimeout(longPressTimer); // 清除长按计时器
+            clearTimeout(longPressTimerTitle); // 清除长按计时器
         });
 
         bookmarkTitle.addEventListener('contextmenu', function(event) {
             event.preventDefault(); // 阻止默认右键菜单
-            showImportExportButtons();
+            titleButtonsVisible = !titleButtonsVisible;
+            if (titleButtonsVisible) {
+                showImportExportButtons();
+            } else {
+                hideImportExportButtons();
+            }
         });
 
         // 长按和右键事件 (针对书签)
+        let longPressTimerBookmark;
+        let bookmarkButtonsVisible = false;
+        let currentBookmark = null;
+
         document.getElementById('bookmark-list').addEventListener('mousedown', function(event) {
             const bookmark = event.target.closest('.bookmark');
             if (bookmark) {
-                longPressTimer = setTimeout(() => {
-                    showButtons(bookmark);
-                    bookmark.classList.add('selected');
+                currentBookmark = bookmark;
+                longPressTimerBookmark = setTimeout(() => {
+                    bookmarkButtonsVisible = !bookmarkButtonsVisible;
+                    if (bookmarkButtonsVisible) {
+                        showButtons(bookmark);
+                        bookmark.classList.add('selected');
+                    } else {
+                        hideAllButtons();
+                        bookmark.classList.remove('selected');
+                    }
                 }, 500); // 500ms后触发长按
             }
         });
 
         document.getElementById('bookmark-list').addEventListener('mouseup', function(event) {
-            clearTimeout(longPressTimer); // 清除长按计时器
-            if (!event.target.closest('.bookmark')) {
-                hideAllButtons();
-                document.querySelectorAll('.bookmark').forEach(bm => bm.classList.remove('selected'));
-                hideImportExportButtons();
-            }
+            clearTimeout(longPressTimerBookmark); // 清除长按计时器
         });
 
         document.getElementById('bookmark-list').addEventListener('mouseleave', function(event) {
-            clearTimeout(longPressTimer); // 清除长按计时器
+            clearTimeout(longPressTimerBookmark); // 清除长按计时器
         });
 
         document.getElementById('bookmark-list').addEventListener('contextmenu', function(event) {
-            hideImportExportButtons();
             event.preventDefault(); // 阻止默认右键菜单
             const bookmark = event.target.closest('.bookmark');
             if (bookmark) {
-                showButtons(bookmark);
-                bookmark.classList.add('selected');
+                bookmarkButtonsVisible = !bookmarkButtonsVisible;
+                if (bookmarkButtonsVisible) {
+                    showButtons(bookmark);
+                    bookmark.classList.add('selected');
+                } else {
+                    hideAllButtons();
+                    bookmark.classList.remove('selected');
+                }
             }
         });
 
@@ -328,7 +458,12 @@
             if (!isClickInsideContainer) {
                 hideAllButtons();
                 hideImportExportButtons();
-
+                titleButtonsVisible = false;
+                bookmarkButtonsVisible = false;
+                if (currentBookmark) {
+                    currentBookmark.classList.remove('selected');
+                    currentBookmark = null;
+                }
             }
         });
 
@@ -396,14 +531,17 @@
 
         // 保存书签到 localStorage
         function saveBookmarks() {
-            const bookmarks = [];
-            document.querySelectorAll('.bookmark').forEach(bookmark => {
-                bookmarks.push({
-                    name: bookmark.getAttribute('data-title'),
-                    url: bookmark.getAttribute('data-url')
+            const user = getCurrentUser();
+            if (user) {
+                const bookmarks = [];
+                document.querySelectorAll('.bookmark').forEach(bookmark => {
+                    bookmarks.push({
+                        name: bookmark.getAttribute('data-title'),
+                        url: bookmark.getAttribute('data-url')
+                    });
                 });
-            });
-            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+                localStorage.setItem(`bookmarks_${user}`, JSON.stringify(bookmarks));
+            }
         }
 
         // Function to handle importing bookmarks from a file
@@ -430,7 +568,6 @@
                         if (bookmarks.length === 0) {
                             bookmarks.push(defaultBookmark);
                         }
-
                         // 清空现有书签并导入
                         const bookmarkList = document.getElementById('bookmark-list');
                         bookmarkList.innerHTML = '';
@@ -459,14 +596,9 @@
                 });
             });
 
-            // Create a single object to hold all bookmarks
-            const exportData = {
-                "Bookmarks": bookmarks // Wrap bookmarks in a "Bookmarks" category
-            };
-
-            const jsonString = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([jsonString], {
-                type: "application/json"
+            const jsonStr = JSON.stringify(bookmarks, null, 2);
+            const blob = new Blob([jsonStr], {
+                type: 'application/json'
             });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -478,22 +610,20 @@
             URL.revokeObjectURL(url);
         }
 
-        // Add this function to clear all bookmarks
         function clearBookmarks() {
             if (confirm("确定要清空所有书签吗？")) {
-                localStorage.removeItem('bookmarks');
+                const user = getCurrentUser();
+                localStorage.removeItem(`bookmarks_${user}`); // 清空当前用户的书签
                 const bookmarkList = document.getElementById('bookmark-list');
-                bookmarkList.innerHTML = ''; // Clear the displayed bookmarks
-
-                // Restore the default bookmark
-                createBookmark(defaultBookmark.name, defaultBookmark.url);
-                saveBookmarks(); // Save the default bookmark to localStorage
-
-                alert("书签已清空，并已恢复默认书签。");
+                bookmarkList.innerHTML = ''; // 清空现有书签
+                createBookmark(defaultBookmark.name, defaultBookmark.url); // 恢复默认书签
+                saveBookmarks();
+                alert('书签已清空并恢复为默认书签！');
             }
         }
 
-        // 初始化加载书签
+        // 初始化加载书签和用户信息
+        displayCurrentUser();
         loadBookmarks();
     </script>
 </body>
