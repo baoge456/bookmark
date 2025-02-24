@@ -310,7 +310,6 @@
         function isLoggedIn() {
             return localStorage.getItem('loggedInUser') !== null;
         }
-
         // 获取当前登录用户
         function getCurrentUser() {
             return localStorage.getItem('loggedInUser');
@@ -454,7 +453,6 @@
         document.addEventListener('click', function(event) {
             const isClickInsideContainer = document.querySelector('.container').contains(event.target);
             const isClickOnBookmarkTitle = document.getElementById('bookmark-title').contains(event.target);
-
             if (!isClickInsideContainer) {
                 hideAllButtons();
                 hideImportExportButtons();
@@ -474,12 +472,12 @@
             const url = prompt('输入书签链接');
             if (name && url) {
                 createBookmarkAtPosition(name, url, bookmark);
-                saveBookmarks();
             }
         }
 
-        // 在指定位置创建书签
-        function createBookmarkAtPosition(name, url, targetBookmark) {
+        // 在指定书签下方创建书签
+        function createBookmarkAtPosition(name, url, existingBookmark) {
+            const bookmarkList = document.getElementById('bookmark-list');
             const newBookmark = document.createElement('div');
             newBookmark.className = 'bookmark';
             newBookmark.setAttribute('data-title', name);
@@ -492,111 +490,112 @@
                     <button onclick="deleteBookmark(this)">删除</button>
                 </div>
             `;
-            // 插入到当前书签的下方
-            targetBookmark.insertAdjacentElement('afterend', newBookmark);
+
+            if (existingBookmark) {
+                bookmarkList.insertBefore(newBookmark, existingBookmark.nextSibling);
+            } else {
+                bookmarkList.appendChild(newBookmark);
+            }
+            saveBookmarks(); // 保存书签
         }
 
         // 编辑书签
         function editBookmark(button) {
             const bookmark = button.closest('.bookmark');
-            const name = bookmark.getAttribute('data-title');
-            const url = bookmark.getAttribute('data-url');
-            const newName = prompt('修改书签名称', name);
-            const newUrl = prompt('修改书签链接', url);
-            if (newName && newUrl) {
+            const currentName = bookmark.getAttribute('data-title');
+            const currentUrl = bookmark.getAttribute('data-url');
+
+            const newName = prompt('输入新的书签名称', currentName);
+            const newUrl = prompt('输入新的书签链接', currentUrl);
+
+            if (newName !== null && newUrl !== null) {
                 bookmark.setAttribute('data-title', newName);
                 bookmark.setAttribute('data-url', newUrl);
                 bookmark.querySelector('h2 a').textContent = newName;
                 bookmark.querySelector('h2 a').href = newUrl;
-                saveBookmarks();
+                saveBookmarks(); // 保存书签
             }
         }
 
         // 删除书签
         function deleteBookmark(button) {
-            const bookmark = button.closest('.bookmark');
-            // 确保至少保留一个书签
-            if (document.querySelectorAll('.bookmark').length > 1) {
+            if (confirm('确定要删除这个书签吗？')) {
+                const bookmark = button.closest('.bookmark');
                 bookmark.remove();
-                saveBookmarks();
-            } else {
-                // 如果删除最后一个书签，恢复默认书签
-                const bookmarkList = document.getElementById('bookmark-list');
-                bookmarkList.innerHTML = ''; // 清空现有书签
-                createBookmark(defaultBookmark.name, defaultBookmark.url);
-                saveBookmarks();
-                alert('最后一条书签已恢复为默认书签！');
+                saveBookmarks(); // 保存书签
             }
         }
 
         // 保存书签到 localStorage
         function saveBookmarks() {
-            const user = getCurrentUser();
-            if (user) {
-                const bookmarks = [];
-                document.querySelectorAll('.bookmark').forEach(bookmark => {
-                    bookmarks.push({
-                        name: bookmark.getAttribute('data-title'),
-                        url: bookmark.getAttribute('data-url')
-                    });
-                });
-                localStorage.setItem(`bookmarks_${user}`, JSON.stringify(bookmarks));
-            }
-        }
-
-        // Function to handle importing bookmarks from a file
-        function importBookmarksFromFile(input) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    try {
-                        const importedData = JSON.parse(event.target.result);
-                        let bookmarks = [];
-
-                        // 提取所有类别的书签到一个数组
-                        for (const category in importedData) {
-                            if (Array.isArray(importedData[category])) {
-                                importedData[category].forEach(item => {
-                                    if (item && typeof item === 'object' && item.name && item.url) {
-                                        bookmarks.push(item);
-                                    }
-                                });
-                            }
-                        }
-                        // 至少保留一个书签
-                        if (bookmarks.length === 0) {
-                            bookmarks.push(defaultBookmark);
-                        }
-                        // 清空现有书签并导入
-                        const bookmarkList = document.getElementById('bookmark-list');
-                        bookmarkList.innerHTML = '';
-                        bookmarks.forEach(bookmark => {
-                            createBookmark(bookmark.name, bookmark.url);
-                        });
-
-                        saveBookmarks();
-                        alert('书签导入成功!');
-                    } catch (error) {
-                        console.error("导入书签时出错:", error);
-                        alert('导入书签时出错，请检查文件格式。');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        }
-
-        // Function to handle exporting bookmarks to a file
-        function exportBookmarks() {
-            let bookmarks = [];
+            const bookmarks = [];
             document.querySelectorAll('.bookmark').forEach(bookmark => {
                 bookmarks.push({
                     name: bookmark.getAttribute('data-title'),
                     url: bookmark.getAttribute('data-url')
                 });
             });
+            const user = getCurrentUser();
+            if (user) {
+                localStorage.setItem(`bookmarks_${user}`, JSON.stringify(bookmarks));
+            } else {
+                localStorage.setItem(lastBookmarksKey, JSON.stringify(bookmarks)); // 保存到 lastBookmarks，如果用户未登录
+            }
+        }
 
-            const jsonStr = JSON.stringify(bookmarks, null, 2);
+        // 导入书签
+        function importBookmarksFromFile(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    try {
+                        const importedBookmarks = JSON.parse(e.target.result);
+
+                        if (Array.isArray(importedBookmarks)) {
+                            const bookmarkList = document.getElementById('bookmark-list');
+                            bookmarkList.innerHTML = ''; // Clear existing bookmarks
+
+                            importedBookmarks.forEach(bookmark => {
+                                if (bookmark && typeof bookmark.name === 'string' && typeof bookmark.url === 'string') {
+                                    createBookmark(bookmark.name, bookmark.url);
+                                } else {
+                                    console.warn("Invalid bookmark format:", bookmark);
+                                }
+                            });
+                            saveBookmarks(); // Save imported bookmarks
+                            alert("书签导入成功！");
+                        } else {
+                            alert("导入的文件格式不正确。请确保它是一个包含书签对象的JSON数组。");
+                            console.error("Invalid file format: File does not contain an array of bookmarks.");
+                        }
+                    } catch (error) {
+                        alert("导入文件时发生错误。请检查文件内容是否有效。" + error.message);
+                        console.error("Error importing bookmarks:", error);
+                    }
+                };
+
+                reader.onerror = function() {
+                    alert("读取文件时出错。");
+                    console.error("Error reading file.");
+                };
+
+                reader.readAsText(file, 'UTF-8'); // Specify encoding
+            }
+        }
+
+        // 导出书签
+        function exportBookmarks() {
+            const user = getCurrentUser();
+            let bookmarks;
+            if (user) {
+                bookmarks = JSON.parse(localStorage.getItem(`bookmarks_${user}`)) || [];
+            } else {
+                bookmarks = JSON.parse(localStorage.getItem(lastBookmarksKey)) || [];
+            }
+
+            const jsonStr = JSON.stringify(bookmarks);
             const blob = new Blob([jsonStr], {
                 type: 'application/json'
             });
@@ -610,21 +609,20 @@
             URL.revokeObjectURL(url);
         }
 
+        // 清空书签列表
         function clearBookmarks() {
             if (confirm("确定要清空所有书签吗？")) {
-                const user = getCurrentUser();
-                localStorage.removeItem(`bookmarks_${user}`); // 清空当前用户的书签
                 const bookmarkList = document.getElementById('bookmark-list');
-                bookmarkList.innerHTML = ''; // 清空现有书签
-                createBookmark(defaultBookmark.name, defaultBookmark.url); // 恢复默认书签
-                saveBookmarks();
-                alert('书签已清空并恢复为默认书签！');
+                bookmarkList.innerHTML = ''; // 清空书签列表
+                saveBookmarks(); // 保存空书签列表
             }
         }
 
-        // 初始化加载书签和用户信息
-        displayCurrentUser();
-        loadBookmarks();
+        // 页面加载时加载书签和显示当前用户
+        document.addEventListener('DOMContentLoaded', function() {
+            displayCurrentUser();
+            loadBookmarks();
+        });
     </script>
 </body>
 
